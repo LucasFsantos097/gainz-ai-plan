@@ -31,7 +31,8 @@ function LoginPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Conta criada! Verifique seu email para confirmar.");
+        toast.success("Conta criada! Entrando...");
+        navigate({ to: "/generate" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -39,12 +40,21 @@ function LoginPage() {
         navigate({ to: "/generate" });
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      const raw = err instanceof Error ? err.message : "Erro desconhecido";
+      let msg = raw;
+      if (/weak[_ ]password|pwned/i.test(raw)) {
+        msg = "Senha muito fraca ou vazada. Use letras, números e símbolos.";
+      } else if (/invalid[_ ]credentials/i.test(raw)) {
+        msg = "Email ou senha inválidos.";
+      } else if (/already.*registered|user.*exists/i.test(raw)) {
+        msg = "Este email já está cadastrado. Tente entrar.";
+      }
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background">
