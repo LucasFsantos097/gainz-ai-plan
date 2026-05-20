@@ -14,10 +14,11 @@ export const Route = createFileRoute("/history")({
 
 type Item = {
   id: string;
-  goal: string;
-  level: string;
-  days_per_week: number;
-  equipment: string;
+  title: string | null;
+  goal: string | null;
+  level: string | null;
+  days_per_week: number | null;
+  weeks: number | null;
   created_at: string;
 };
 
@@ -83,12 +84,10 @@ function HistoryPage() {
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-display font-semibold">{w.goal}</span>
-                      <span className="text-xs text-muted-foreground">·</span>
-                      <span className="text-sm text-muted-foreground">{w.level}</span>
+                      <span className="font-display font-semibold">{w.title ?? w.goal ?? "Treino"}</span>
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {w.days_per_week}× por semana · {w.equipment} · {new Date(w.created_at).toLocaleDateString("pt-BR")}
+                      {w.weeks ?? "—"} semanas · {w.days_per_week ?? "?"}×/semana · {new Date(w.created_at).toLocaleDateString("pt-BR")}
                     </div>
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-1" />
