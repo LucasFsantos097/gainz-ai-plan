@@ -4,43 +4,92 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const FREE_LIMIT = 3;
 
-const WorkoutInput = z.object({
-  goal: z.enum(["Hipertrofia", "Emagrecimento", "Condicionamento", "Forca"]),
-  level: z.enum(["Iniciante", "Intermediario", "Avancado"]),
-  daysPerWeek: z.number().int().min(2).max(5),
-  equipment: z.enum(["Academia completa", "Halteres em casa", "Sem equipamento"]),
-  age: z.number().int().min(12).max(99),
-  sex: z.enum(["Masculino", "Feminino", "Outro"]),
+const AnamnesisSchema = z.object({
+  // Step 1 — Identificação
+  fullName: z.string().min(1).max(120),
+  birthDate: z.string().min(1).max(20),
+  phone: z.string().min(1).max(40),
+  email: z.string().email().max(160),
+  sex: z.enum(["Feminino", "Masculino"]),
+  // Step 2 — Treino
+  frequency: z.enum(["2x", "3x", "4x", "5x", "6x"]),
+  timeAvailable: z.string().min(1).max(80),
+  goals: z.array(z.enum([
+    "Hipertrofia",
+    "Perda de peso",
+    "Qualidade de vida",
+    "Correção postural",
+    "Melhora cardiorrespiratória",
+  ])).min(1).max(2),
+  hasRoutine: z.enum(["Sim", "Sim, porém pouco", "Não"]),
+  emphasis: z.array(z.string().max(40)).max(10),
+  // Step 3 — Saúde Geral
+  smokeDrink: z.string().max(500),
+  diseases: z.string().max(500),
+  bonePathology: z.string().max(500),
+  surgeries: z.string().max(500),
+  medications: z.string().max(500),
+  familyCardiac: z.string().max(500),
+  // Step 4 — Indicadores
+  cholesterol: z.string().max(120),
+  glycemia: z.string().max(120),
+  bloodPressure: z.string().max(120),
+  waterIntake: z.string().max(120),
+  sleepHours: z.string().max(120),
+  headaches: z.string().max(300),
+  // Step 5 — Dores
+  jointPainDaily: z.string().max(500),
+  jointPainTraining: z.string().max(500),
+  feelBadTraining: z.enum(["Sim", "Não", "Não treino"]),
+  professionals: z.array(z.string().max(40)).max(10),
+  // Step 6 — Rotina
+  routine: z.string().max(2000),
 });
 
-export type WorkoutInputType = z.infer<typeof WorkoutInput>;
+export type Anamnesis = z.infer<typeof AnamnesisSchema>;
 
 export type Exercise = {
   name: string;
   sets: string;
   reps: string;
+  rest: string;
   tip: string;
 };
 
 export type WorkoutDay = {
   day: string;
   focus: string;
+  estimatedMinutes: number;
   exercises: Exercise[];
+};
+
+export type WorkoutWeek = {
+  weekNumber: number;
+  phase: string;
+  days: WorkoutDay[];
+};
+
+export type Phase = {
+  name: string;
+  weekRange: string;
+  description: string;
 };
 
 export type WorkoutPlan = {
   title: string;
   summary: string;
-  days: WorkoutDay[];
+  totalWeeks: number;
+  sessionMinutes: number;
+  phases: Phase[];
+  weeks: WorkoutWeek[];
 };
 
 export const generateWorkout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => WorkoutInput.parse(input))
+  .inputValidator((input: unknown) => AnamnesisSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Check limit
     const { data: profile } = await supabase
       .from("profiles")
       .select("is_premium, workouts_generated")
@@ -51,52 +100,113 @@ export const generateWorkout = createServerFn({ method: "POST" })
     const generated = profile?.workouts_generated ?? 0;
 
     if (!isPremium && generated >= FREE_LIMIT) {
-      return {
-        ok: false as const,
-        error: "limit_reached" as const,
-        used: generated,
-        limit: FREE_LIMIT,
-      };
+      return { ok: false as const, error: "limit_reached" as const, used: generated, limit: FREE_LIMIT };
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) {
-      return { ok: false as const, error: "missing_key" as const };
-    }
+    if (!apiKey) return { ok: false as const, error: "missing_key" as const };
 
-    const systemPrompt = `Voce e um personal trainer especialista. Gere um plano de treino COMPLETO e personalizado em portugues do Brasil. Retorne APENAS JSON valido seguindo EXATAMENTE este schema:
+    const systemPrompt = `Você é um personal trainer e fisiologista do exercício. Após analisar uma anamnese COMPLETA, gere uma periodização de treino de 8 a 10 semanas em português do Brasil.
+
+Estruture o programa em FASES claras:
+- Adaptação (semanas iniciais): técnica, ADM, baixa intensidade
+- Base: aumento progressivo de volume
+- Força/Intensificação: cargas mais altas, menores repetições
+- Deload (1 semana de descarga, geralmente penúltima ou última)
+
+REGRAS:
+- Respeitar restrições, dores, patologias, cirurgias e medicamentos relatados.
+- Adaptar volume/intensidade ao nível atual (rotina prévia) e ao tempo disponível por sessão.
+- Distribuir EXATAMENTE o número de dias semanais informado.
+- Cada dia deve ter 5–8 exercícios com séries, repetições, descanso (ex: "60s") e dica técnica curta.
+- A duração estimada de cada sessão deve respeitar o tempo disponível informado.
+- Enfatizar musculaturas pedidas, sem ignorar grupos opostos.
+- O título e o summary devem ser personalizados (citar o nome e objetivo).
+
+Retorne APENAS JSON válido neste schema EXATO:
 {
-  "title": "string curto",
-  "summary": "1-2 frases motivacionais e descrevendo o plano",
-  "days": [
+  "title": "string curta personalizada",
+  "summary": "2-3 frases analisando a anamnese e descrevendo a estratégia",
+  "totalWeeks": 8,
+  "sessionMinutes": 60,
+  "phases": [
+    {"name": "Adaptação", "weekRange": "1-2", "description": "..."},
+    {"name": "Base", "weekRange": "3-5", "description": "..."},
+    {"name": "Força", "weekRange": "6-7", "description": "..."},
+    {"name": "Deload", "weekRange": "8", "description": "..."}
+  ],
+  "weeks": [
     {
-      "day": "Dia 1",
-      "focus": "ex: Peito e Triceps",
-      "exercises": [
-        { "name": "Supino reto", "sets": "4", "reps": "8-12", "tip": "Mantenha as escapulas retraidas..." }
+      "weekNumber": 1,
+      "phase": "Adaptação",
+      "days": [
+        {
+          "day": "Dia 1",
+          "focus": "Peito e Tríceps",
+          "estimatedMinutes": 55,
+          "exercises": [
+            {"name": "Supino reto", "sets": "3", "reps": "10-12", "rest": "60s", "tip": "Escápulas retraídas..."}
+          ]
+        }
       ]
     }
   ]
 }
-Gere EXATAMENTE o numero de dias solicitado. Cada dia deve ter 5-7 exercicios. As dicas devem ser tecnicas e praticas. NAO inclua texto fora do JSON.`;
 
-    const userPrompt = `Objetivo: ${data.goal}
-Nivel: ${data.level}
-Dias por semana: ${data.daysPerWeek}
-Equipamentos: ${data.equipment}
-Idade: ${data.age}
+Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal. Não inclua nada fora do JSON.`;
+
+    const goalsList = data.goals.join(", ");
+    const emphasisList = data.emphasis.length ? data.emphasis.join(", ") : "Nenhuma específica";
+    const profList = data.professionals.length ? data.professionals.join(", ") : "Nenhum";
+
+    const userPrompt = `ANAMNESE COMPLETA DO ALUNO
+
+[Identificação]
+Nome: ${data.fullName}
+Data de nascimento: ${data.birthDate}
 Sexo: ${data.sex}
+Telefone: ${data.phone}
+Email: ${data.email}
 
-Gere um plano de treino otimizado considerando o nivel e o equipamento disponivel.`;
+[Treino]
+Frequência desejada: ${data.frequency} por semana
+Tempo disponível por sessão: ${data.timeAvailable}
+Objetivo(s) principal(is): ${goalsList}
+Já possui rotina de exercícios: ${data.hasRoutine}
+Ênfase em musculatura: ${emphasisList}
+
+[Saúde Geral]
+Fumo/Álcool: ${data.smokeDrink || "Não informado"}
+Doenças: ${data.diseases || "Nenhuma"}
+Patologia óssea/estrutural: ${data.bonePathology || "Nenhuma"}
+Cirurgias prévias: ${data.surgeries || "Nenhuma"}
+Medicamentos: ${data.medications || "Nenhum"}
+Histórico familiar cardiopatas: ${data.familyCardiac || "Não informado"}
+
+[Indicadores]
+Colesterol: ${data.cholesterol || "Não informado"}
+Glicemia: ${data.glycemia || "Não informado"}
+Pressão arterial: ${data.bloodPressure || "Não informado"}
+Água/dia: ${data.waterIntake || "Não informado"}
+Sono: ${data.sleepHours || "Não informado"}
+Dores de cabeça recorrentes: ${data.headaches || "Não"}
+
+[Dores e Acompanhamento]
+Dor articular no dia a dia: ${data.jointPainDaily || "Não"}
+Dor articular treinando: ${data.jointPainTraining || "Não"}
+Passa mal no treino: ${data.feelBadTraining}
+Profissionais que acompanham: ${profList}
+
+[Rotina]
+${data.routine || "Não detalhada"}
+
+Crie uma periodização de 8 a 10 semanas, incluindo OBRIGATORIAMENTE uma semana de Deload, ajustada a essa anamnese.`;
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -105,23 +215,16 @@ Gere um plano de treino otimizado considerando o nivel e o equipamento disponive
       }),
     });
 
-    if (resp.status === 429) {
-      return { ok: false as const, error: "rate_limit" as const };
-    }
-    if (resp.status === 402) {
-      return { ok: false as const, error: "credits" as const };
-    }
+    if (resp.status === 429) return { ok: false as const, error: "rate_limit" as const };
+    if (resp.status === 402) return { ok: false as const, error: "credits" as const };
     if (!resp.ok) {
-      const txt = await resp.text();
-      console.error("AI gateway error:", resp.status, txt);
+      console.error("AI gateway error:", resp.status, await resp.text());
       return { ok: false as const, error: "ai_failed" as const };
     }
 
     const json = await resp.json();
     const content = json?.choices?.[0]?.message?.content;
-    if (!content) {
-      return { ok: false as const, error: "empty_response" as const };
-    }
+    if (!content) return { ok: false as const, error: "empty_response" as const };
 
     let plan: WorkoutPlan;
     try {
@@ -131,17 +234,21 @@ Gere um plano de treino otimizado considerando o nivel e o equipamento disponive
       return { ok: false as const, error: "parse_failed" as const };
     }
 
-    // Persist workout + increment counter
+    const freqNum = parseInt(data.frequency);
+
     const { data: inserted, error: insertErr } = await supabase
       .from("workouts")
       .insert({
         user_id: userId,
-        goal: data.goal,
-        level: data.level,
-        days_per_week: data.daysPerWeek,
-        equipment: data.equipment,
-        age: data.age,
+        title: plan.title,
+        goal: data.goals[0],
+        level: data.hasRoutine === "Não" ? "Iniciante" : data.hasRoutine === "Sim, porém pouco" ? "Intermediario" : "Avancado",
+        days_per_week: freqNum,
+        equipment: "Conforme anamnese",
+        age: null,
         sex: data.sex,
+        weeks: plan.totalWeeks ?? plan.weeks?.length ?? 8,
+        anamnesis: data as never,
         plan: plan as never,
       })
       .select("id")
@@ -152,19 +259,9 @@ Gere um plano de treino otimizado considerando o nivel e o equipamento disponive
       return { ok: false as const, error: "save_failed" as const };
     }
 
-    await supabase
-      .from("profiles")
-      .update({ workouts_generated: generated + 1 })
-      .eq("id", userId);
+    await supabase.from("profiles").update({ workouts_generated: generated + 1 }).eq("id", userId);
 
-    return {
-      ok: true as const,
-      workoutId: inserted.id,
-      plan,
-      used: generated + 1,
-      limit: FREE_LIMIT,
-      isPremium,
-    };
+    return { ok: true as const, workoutId: inserted.id, used: generated + 1, limit: FREE_LIMIT, isPremium };
   });
 
 export const getProfile = createServerFn({ method: "GET" })
@@ -196,7 +293,13 @@ export const getWorkout = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !row) return { ok: false as const };
-    return { ok: true as const, workout: row };
+
+    const { data: completions } = await supabase
+      .from("session_completions")
+      .select("week_number, day_number, completed_at")
+      .eq("workout_id", data.id);
+
+    return { ok: true as const, workout: row, completions: completions ?? [] };
   });
 
 export const listWorkouts = createServerFn({ method: "GET" })
@@ -205,9 +308,43 @@ export const listWorkouts = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data } = await supabase
       .from("workouts")
-      .select("id, goal, level, days_per_week, equipment, created_at")
+      .select("id, title, goal, level, days_per_week, weeks, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
     return { workouts: data ?? [] };
+  });
+
+export const toggleSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      workoutId: z.string().uuid(),
+      weekNumber: z.number().int().min(1).max(20),
+      dayNumber: z.number().int().min(1).max(10),
+      completed: z.boolean(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (data.completed) {
+      const { error } = await supabase.from("session_completions").insert({
+        user_id: userId,
+        workout_id: data.workoutId,
+        week_number: data.weekNumber,
+        day_number: data.dayNumber,
+      });
+      if (error && !error.message.includes("duplicate")) {
+        return { ok: false as const };
+      }
+    } else {
+      await supabase
+        .from("session_completions")
+        .delete()
+        .eq("workout_id", data.workoutId)
+        .eq("week_number", data.weekNumber)
+        .eq("day_number", data.dayNumber)
+        .eq("user_id", userId);
+    }
+    return { ok: true as const };
   });
