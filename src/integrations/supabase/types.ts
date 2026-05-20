@@ -41,42 +41,86 @@ export type Database = {
         }
         Relationships: []
       }
+      session_completions: {
+        Row: {
+          completed_at: string
+          day_number: number
+          id: string
+          user_id: string
+          week_number: number
+          workout_id: string
+        }
+        Insert: {
+          completed_at?: string
+          day_number: number
+          id?: string
+          user_id: string
+          week_number: number
+          workout_id: string
+        }
+        Update: {
+          completed_at?: string
+          day_number?: number
+          id?: string
+          user_id?: string
+          week_number?: number
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_completions_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           age: number | null
+          anamnesis: Json | null
           created_at: string
-          days_per_week: number
-          equipment: string
-          goal: string
+          days_per_week: number | null
+          equipment: string | null
+          goal: string | null
           id: string
-          level: string
+          level: string | null
           plan: Json
           sex: string | null
+          title: string | null
           user_id: string
+          weeks: number | null
         }
         Insert: {
           age?: number | null
+          anamnesis?: Json | null
           created_at?: string
-          days_per_week: number
-          equipment: string
-          goal: string
+          days_per_week?: number | null
+          equipment?: string | null
+          goal?: string | null
           id?: string
-          level: string
+          level?: string | null
           plan: Json
           sex?: string | null
+          title?: string | null
           user_id: string
+          weeks?: number | null
         }
         Update: {
           age?: number | null
+          anamnesis?: Json | null
           created_at?: string
-          days_per_week?: number
-          equipment?: string
-          goal?: string
+          days_per_week?: number | null
+          equipment?: string | null
+          goal?: string | null
           id?: string
-          level?: string
+          level?: string | null
           plan?: Json
           sex?: string | null
+          title?: string | null
           user_id?: string
+          weeks?: number | null
         }
         Relationships: []
       }
