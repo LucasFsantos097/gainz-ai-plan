@@ -168,13 +168,35 @@ Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal, cada di
     const emphasisList = data.emphasis.length ? data.emphasis.join(", ") : "Nenhuma específica";
     const profList = data.professionals.length ? data.professionals.join(", ") : "Nenhum";
 
-    const userPrompt = `ANAMNESE COMPLETA DO ALUNO
+    // Calcular idade a partir da data de nascimento
+    let ageStr = "Não calculada";
+    const birth = new Date(data.birthDate);
+    if (!isNaN(birth.getTime())) {
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+      if (age > 0 && age < 120) ageStr = `${age} anos`;
+    }
 
-[Identificação]
-Nome: ${data.fullName}
-Data de nascimento: ${data.birthDate}
-Sexo: ${data.sex}
-Telefone: ${data.phone}
+    // Nível detalhado
+    const levelDetailed =
+      data.hasRoutine === "Não"
+        ? "Iniciante (sem rotina prévia de treino — priorizar técnica e adaptação neuromuscular)"
+        : data.hasRoutine === "Sim, porém pouco"
+          ? "Intermediário (rotina inconsistente — base presente, ainda precisa consolidar volume)"
+          : "Avançado (rotina consistente — tolera maior volume e intensidade)";
+
+    // Divisão obrigatória conforme frequência
+    const freqNum = parseInt(data.frequency);
+    const splitMap: Record<number, string> = {
+      2: "Full Body (corpo inteiro nos 2 dias)",
+      3: "ABC",
+      4: "Upper/Lower (Superior A, Inferior A, Superior B, Inferior B)",
+      5: "ABCDE",
+      6: "PPL (Push, Pull, Legs x2)",
+    };
+    const splitInfo = splitMap[freqNum] ?? "ABC";
 Email: ${data.email}
 
 [Treino]
