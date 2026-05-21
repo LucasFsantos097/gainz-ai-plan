@@ -278,7 +278,8 @@ Crie uma periodização de 8 a 10 semanas, incluindo OBRIGATORIAMENTE uma semana
       return { ok: false as const, error: "parse_failed" as const };
     }
 
-    const freqNum = parseInt(data.frequency);
+
+
 
     const { data: inserted, error: insertErr } = await supabase
       .from("workouts")
