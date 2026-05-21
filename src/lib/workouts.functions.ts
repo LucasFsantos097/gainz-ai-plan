@@ -197,7 +197,20 @@ Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal, cada di
       6: "PPL (Push, Pull, Legs x2)",
     };
     const splitInfo = splitMap[freqNum] ?? "ABC";
+
+    const userPrompt = `ANAMNESE COMPLETA DO ALUNO
+
+[Identificação]
+Nome: ${data.fullName}
+Data de nascimento: ${data.birthDate}
+Idade calculada: ${ageStr}
+Sexo: ${data.sex}
+Telefone: ${data.phone}
 Email: ${data.email}
+
+[Nível e Divisão]
+Nível detalhado: ${levelDetailed}
+Divisão OBRIGATÓRIA a ser usada: ${splitInfo}
 
 [Treino]
 Frequência desejada: ${data.frequency} por semana
