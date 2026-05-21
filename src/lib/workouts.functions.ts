@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const FREE_LIMIT = 3;
+const FREE_LIMIT = 500;
 
 const AnamnesisSchema = z.object({
   // Step 1 — Identificação
