@@ -136,7 +136,7 @@ function GeneratePage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <div className="container mx-auto max-w-3xl px-4 py-10 md:py-14">
+      <div className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Anamnese Profissional</h1>
           <p className="mt-2 text-muted-foreground">A IA gera sua periodização de 8–10 semanas com base nas respostas.</p>
@@ -151,41 +151,115 @@ function GeneratePage() {
 
         {limitReached && <PremiumBanner />}
 
-        <div className="mb-6">
-          <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">
-            <span>Etapa {step + 1} de {totalSteps}</span>
-            <span className="text-primary font-semibold">{STEP_TITLES[step]}</span>
-          </div>
-          <Progress value={progress} />
-        </div>
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+          <div>
+            <div className="mb-6">
+              <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">
+                <span>Etapa {step + 1} de {totalSteps}</span>
+                <span className="text-primary font-semibold">{STEP_TITLES[step]}</span>
+              </div>
+              <Progress value={progress} />
+            </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
-          {step === 0 && <StepIdentification form={form} set={set} />}
-          {step === 1 && <StepTraining form={form} set={set} />}
-          {step === 2 && <StepHealth form={form} set={set} />}
-          {step === 3 && <StepIndicators form={form} set={set} />}
-          {step === 4 && <StepPain form={form} set={set} />}
-          {step === 5 && <StepRoutine form={form} set={set} />}
+            <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
+              {step === 0 && <StepIdentification form={form} set={set} />}
+              {step === 1 && <StepTraining form={form} set={set} />}
+              {step === 2 && <StepHealth form={form} set={set} />}
+              {step === 3 && <StepIndicators form={form} set={set} />}
+              {step === 4 && <StepPain form={form} set={set} />}
+              {step === 5 && <StepRoutine form={form} set={set} />}
 
-          <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-6">
-            <Button type="button" variant="ghost" onClick={prev} disabled={step === 0 || submitting}>
-              <ArrowLeft className="h-4 w-4" /> Voltar
-            </Button>
-            {step < totalSteps - 1 ? (
-              <Button type="button" onClick={next} className="font-semibold">
-                Continuar <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button type="button" onClick={submit} disabled={submitting || !!limitReached} className="font-semibold neon-glow">
-                {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando periodização...</> : <><Sparkles className="h-4 w-4" /> Gerar Treino</>}
-              </Button>
-            )}
+              <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-6">
+                <Button type="button" variant="ghost" onClick={prev} disabled={step === 0 || submitting}>
+                  <ArrowLeft className="h-4 w-4" /> Voltar
+                </Button>
+                {step < totalSteps - 1 ? (
+                  <Button type="button" onClick={next} className="font-semibold">
+                    Continuar <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={submit} disabled={submitting || !!limitReached} className="font-semibold neon-glow">
+                    {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando periodização...</> : <><Sparkles className="h-4 w-4" /> Gerar Treino</>}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
+
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <PlanPreview form={form} />
+          </aside>
         </div>
       </div>
     </div>
   );
 }
+
+function calcAge(birthDate?: string): number | null {
+  if (!birthDate) return null;
+  const b = new Date(birthDate);
+  if (Number.isNaN(b.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
+}
+
+const SPLIT_BY_FREQ: Record<string, string> = {
+  "2x": "Full Body", "3x": "ABC", "4x": "Upper/Lower", "5x": "ABCDE", "6x": "Push/Pull/Legs",
+};
+
+function PlanPreview({ form }: { form: FormState }) {
+  const age = calcAge(form.birthDate);
+  const level = form.hasRoutine === "Sim" ? "Intermediário/Avançado" : form.hasRoutine === "Sim, porém pouco" ? "Iniciante/Intermediário" : "Iniciante";
+  const split = form.frequency ? SPLIT_BY_FREQ[form.frequency] : "—";
+  const goals = form.goals?.length ? form.goals.join(" + ") : "—";
+  const emphasis = form.emphasis?.length ? form.emphasis.filter((m) => m !== "Não tenho nenhum específico") : [];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h3 className="font-display text-lg font-bold">Preview do treino</h3>
+      </div>
+      <p className="mb-4 text-xs text-muted-foreground">Resumo em tempo real do plano que será gerado.</p>
+
+      <dl className="space-y-3 text-sm">
+        <Row label="Aluno" value={form.fullName || "—"} />
+        <Row label="Idade" value={age != null ? `${age} anos` : "—"} />
+        <Row label="Sexo" value={form.sex || "—"} />
+        <Row label="Nível" value={level} />
+        <div className="my-3 border-t border-border" />
+        <Row label="Objetivo" value={goals} />
+        <Row label="Frequência" value={form.frequency || "—"} />
+        <Row label="Divisão" value={split} />
+        <Row label="Tempo/sessão" value={form.timeAvailable || "—"} />
+        <Row label="Periodização" value="8–10 sem. (Adapt → Base → Força → Deload)" />
+        {emphasis.length > 0 && (
+          <div>
+            <dt className="mb-1.5 text-xs uppercase tracking-wider text-muted-foreground">Ênfase</dt>
+            <dd className="flex flex-wrap gap-1.5">
+              {emphasis.map((m) => (
+                <span key={m} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{m}</span>
+              ))}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dd className="text-right text-sm font-medium">{value}</dd>
+    </div>
+  );
+}
+
 
 type StepProps = { form: FormState; set: <K extends keyof FormState>(k: K, v: FormState[K]) => void };
 
