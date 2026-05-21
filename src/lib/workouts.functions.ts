@@ -109,19 +109,28 @@ export const generateWorkout = createServerFn({ method: "POST" })
     const systemPrompt = `Você é um personal trainer e fisiologista do exercício. Após analisar uma anamnese COMPLETA, gere uma periodização de treino de 8 a 10 semanas em português do Brasil.
 
 Estruture o programa em FASES claras:
-- Adaptação (semanas iniciais): técnica, ADM, baixa intensidade
-- Base: aumento progressivo de volume
-- Força/Intensificação: cargas mais altas, menores repetições
-- Deload (1 semana de descarga, geralmente penúltima ou última)
+- Adaptação (semanas iniciais): técnica, ADM, baixa intensidade (reps 12-15)
+- Base: aumento progressivo de volume (reps 10-12)
+- Força/Intensificação: cargas mais altas, menores repetições (reps 6-8 para força / 8-10 para hipertrofia)
+- Deload (1 semana de descarga): reduzir séries e intensidade ~40-50%
 
-REGRAS:
-- Respeitar restrições, dores, patologias, cirurgias e medicamentos relatados.
-- Adaptar volume/intensidade ao nível atual (rotina prévia) e ao tempo disponível por sessão.
-- Distribuir EXATAMENTE o número de dias semanais informado.
-- Cada dia deve ter 5–8 exercícios com séries, repetições, descanso (ex: "60s") e dica técnica curta.
-- A duração estimada de cada sessão deve respeitar o tempo disponível informado.
-- Enfatizar musculaturas pedidas, sem ignorar grupos opostos.
-- O título e o summary devem ser personalizados (citar o nome e objetivo).
+REGRAS OBRIGATÓRIAS (NÃO VIOLAR):
+1. Cada sessão deve ter EXATAMENTE de 6 a 8 exercícios. NUNCA menos de 6, NUNCA mais de 8.
+2. Toda sessão deve incluir 1 a 2 EXERCÍCIOS COMPOSTOS PRINCIPAIS (ex: agachamento, levantamento terra, supino, remada, desenvolvimento, barra fixa), sempre posicionados no início da sessão.
+3. Séries entre 3 e 5 (números inteiros). Repetições variam por fase e objetivo: hipertrofia 8-12, força 4-6, perda de peso/resistência 12-20.
+4. Descanso é OBRIGATÓRIO em CADA exercício (ex: "90s", "2min"). Compostos: 90s-3min. Isolados: 45-75s.
+5. Divisão de treino conforme frequência semanal:
+   - 2x = Full Body (corpo inteiro nos 2 dias)
+   - 3x = ABC
+   - 4x = Upper/Lower (Superior A, Inferior A, Superior B, Inferior B)
+   - 5x = ABCDE
+   - 6x = PPL (Push, Pull, Legs x2)
+6. Se houver LESÃO, DOR ARTICULAR ou CIRURGIA relatada: SUBSTITUIR exercícios que sobrecarreguem a região afetada por variações seguras, e na "tip" do exercício substituto EXPLICITAR brevemente o motivo (ex: "Substitui agachamento livre por leg press devido ao histórico de cirurgia no joelho — menor cisalhamento").
+7. Respeitar medicamentos, idade e nível detalhado.
+8. Distribuir EXATAMENTE o número de dias semanais informado, respeitando a divisão da regra 5.
+9. Duração estimada da sessão deve respeitar o tempo disponível informado.
+10. Enfatizar musculaturas pedidas, sem ignorar grupos opostos (evitar desequilíbrios).
+11. Título e summary personalizados (citar nome, idade, nível e objetivo).
 
 Retorne APENAS JSON válido neste schema EXATO:
 {
@@ -141,11 +150,11 @@ Retorne APENAS JSON válido neste schema EXATO:
       "phase": "Adaptação",
       "days": [
         {
-          "day": "Dia 1",
-          "focus": "Peito e Tríceps",
-          "estimatedMinutes": 55,
+          "day": "Dia 1 - Push",
+          "focus": "Peito, Ombro e Tríceps",
+          "estimatedMinutes": 60,
           "exercises": [
-            {"name": "Supino reto", "sets": "3", "reps": "10-12", "rest": "60s", "tip": "Escápulas retraídas..."}
+            {"name": "Supino reto com barra", "sets": "4", "reps": "8-10", "rest": "2min", "tip": "Composto principal. Escápulas retraídas, descida controlada."}
           ]
         }
       ]
@@ -153,7 +162,7 @@ Retorne APENAS JSON válido neste schema EXATO:
   ]
 }
 
-Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal. Não inclua nada fora do JSON.`;
+Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal, cada dia com 6 a 8 exercícios (sendo 1-2 compostos no início). Não inclua nada fora do JSON.`;
 
     const goalsList = data.goals.join(", ");
     const emphasisList = data.emphasis.length ? data.emphasis.join(", ") : "Nenhuma específica";
