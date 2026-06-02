@@ -75,6 +75,20 @@ export type Phase = {
   description: string;
 };
 
+export type WeeklyAnalysis = {
+  weekNumber: number;
+  focus: string;
+  rationale: string;
+};
+
+export type PlanAnalysis = {
+  overview: string;
+  anamnesisHighlights: string[];
+  adaptations: string[];
+  weekly: WeeklyAnalysis[];
+  expectedOutcomes: string;
+};
+
 export type WorkoutPlan = {
   title: string;
   summary: string;
@@ -82,6 +96,7 @@ export type WorkoutPlan = {
   sessionMinutes: number;
   phases: Phase[];
   weeks: WorkoutWeek[];
+  analysis?: PlanAnalysis;
 };
 
 export const generateWorkout = createServerFn({ method: "POST" })
@@ -106,7 +121,7 @@ export const generateWorkout = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false as const, error: "missing_key" as const };
 
-    const systemPrompt = `Você é um personal trainer especialista e fisiologista do exercício com mais de 10 anos de experiência. Após analisar uma anamnese COMPLETA, gere uma periodização de treino profissional de 8 a 10 semanas em português do Brasil.
+    const systemPrompt = `Você é um personal trainer especialista e fisiologista do exercício com mais de 10 anos de experiência. Após analisar uma anamnese COMPLETA, gere uma periodização de treino profissional de EXATAMENTE 8 semanas em português do Brasil.
 
 Estruture o programa em FASES claras:
 - Adaptação (semanas 1-2): foco em técnica, amplitude de movimento, baixa intensidade, aprendizado motor
@@ -154,6 +169,9 @@ REGRAS DE SEGURANÇA E PERSONALIZAÇÃO:
 - Adaptar complexidade dos exercícios ao nível do aluno (iniciante = exercícios básicos; avançado = variações e técnicas)
 - O título e o summary DEVEM citar o nome do aluno, o sexo e mencionar aspectos específicos da anamnese dele
 
+PARECER FINAL OBRIGATÓRIO (campo "analysis"):
+Após gerar a periodização, você DEVE preencher o objeto "analysis" com uma análise minuciosa e personalizada explicando POR QUE este treino foi prescrito para este aluno específico. Use o nome dele, cite dados concretos da anamnese (idade, sexo, objetivo, frequência, ênfase, restrições, rotina, indicadores de saúde, dores) e justifique cada decisão.
+
 Retorne APENAS JSON válido neste schema EXATO:
 {
   "title": "string curta personalizada",
@@ -181,10 +199,21 @@ Retorne APENAS JSON válido neste schema EXATO:
         }
       ]
     }
-  ]
+  ],
+  "analysis": {
+    "overview": "Parágrafo de 4-6 frases citando o nome do aluno, idade, sexo, objetivo principal e explicando a lógica geral da periodização escolhida para ele.",
+    "anamnesisHighlights": ["Lista de 4-7 pontos da anamnese que influenciaram a prescrição (ex: 'Dor no ombro esquerdo durante treino — exercícios de empurrar foram adaptados', 'Ênfase em quadríceps — volume extra para pernas')"],
+    "adaptations": ["Lista de adaptações concretas feitas no programa por causa de saúde, dores, rotina ou nível"],
+    "weekly": [
+      {"weekNumber": 1, "focus": "string curta", "rationale": "Frase explicando o que será trabalhado nesta semana e por quê, conectando à anamnese"}
+    ],
+    "expectedOutcomes": "Parágrafo descrevendo os resultados esperados ao final do programa para este aluno especificamente"
+  }
 }
 
-Gere TODAS as semanas (8 a 10) com TODOS os dias da frequência semanal. Não inclua nada fora do JSON.`;
+O array "analysis.weekly" DEVE conter uma entrada para CADA semana do programa (1 até totalWeeks), na ordem.
+
+Gere TODAS as 8 semanas com TODOS os dias da frequência semanal. Não inclua nada fora do JSON.`;
 
     const goalsList = data.goals.join(", ");
     const emphasisList = data.emphasis.length ? data.emphasis.join(", ") : "Nenhuma específica";
@@ -235,7 +264,7 @@ Profissionais de saúde que acompanham: ${profList}
 ${data.routine || "Não detalhada pelo aluno"}
 
 INSTRUÇÕES FINAIS:
-- Gere periodização completa de 8 a 10 semanas com TODAS as semanas detalhadas
+- Gere periodização completa de EXATAMENTE 8 semanas com TODAS as semanas detalhadas
 - Cada sessão deve ter OBRIGATORIAMENTE 6 a 8 exercícios
 - Inclua DELOAD obrigatório na última ou penúltima semana
 - Personalize o título e o summary citando ${data.fullName} e seus objetivos específicos
@@ -245,7 +274,7 @@ INSTRUÇÕES FINAIS:
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

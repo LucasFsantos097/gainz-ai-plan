@@ -153,6 +153,59 @@ function WorkoutPage() {
           </div>
         )}
 
+        {/* Detailed AI analysis */}
+        {plan.analysis && (
+          <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="font-display text-2xl font-bold">Parecer da IA</h2>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-foreground/90">{plan.analysis.overview}</p>
+
+            {plan.analysis.anamnesisHighlights?.length > 0 && (
+              <div className="mt-5">
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-primary">O que pesou na sua anamnese</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground/90">
+                  {plan.analysis.anamnesisHighlights.map((h, i) => <li key={i}>{h}</li>)}
+                </ul>
+              </div>
+            )}
+
+            {plan.analysis.adaptations?.length > 0 && (
+              <div className="mt-5">
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-primary">Adaptações feitas para você</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground/90">
+                  {plan.analysis.adaptations.map((h, i) => <li key={i}>{h}</li>)}
+                </ul>
+              </div>
+            )}
+
+            {plan.analysis.weekly?.length > 0 && (
+              <div className="mt-5">
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-primary">O que será trabalhado semana a semana</h3>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {plan.analysis.weekly.map((w) => (
+                    <div key={w.weekNumber} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-baseline justify-between">
+                        <span className="font-display text-sm font-bold">Semana {w.weekNumber}</span>
+                        <span className="text-xs text-primary">{w.focus}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{w.rationale}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {plan.analysis.expectedOutcomes && (
+              <div className="mt-5 rounded-lg border border-border bg-background/40 p-4">
+                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-primary">Resultados esperados</h3>
+                <p className="mt-2 text-sm text-foreground/90">{plan.analysis.expectedOutcomes}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Week selector */}
         <div className="mt-10">
           <h2 className="mb-4 font-display text-2xl font-bold">Semanas</h2>
