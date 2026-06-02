@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/generate")({
   component: GeneratePage,
-  head: () => ({ meta: [{ title: "Anamnese · FitPlan AI" }] }),
+  head: () => ({ meta: [{ title: "Anamnese · FITPLAN" }] }),
 });
 
 type FormState = Partial<Anamnesis>;
