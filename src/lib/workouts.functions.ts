@@ -121,7 +121,7 @@ export const generateWorkout = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false as const, error: "missing_key" as const };
 
-    const systemPrompt = `Você é um personal trainer especialista e fisiologista do exercício com mais de 10 anos de experiência. Após analisar uma anamnese COMPLETA, gere uma periodização de treino profissional de 8 a 10 semanas em português do Brasil.
+    const systemPrompt = `Você é um personal trainer especialista e fisiologista do exercício com mais de 10 anos de experiência. Após analisar uma anamnese COMPLETA, gere uma periodização de treino profissional de EXATAMENTE 8 semanas em português do Brasil.
 
 Estruture o programa em FASES claras:
 - Adaptação (semanas 1-2): foco em técnica, amplitude de movimento, baixa intensidade, aprendizado motor
