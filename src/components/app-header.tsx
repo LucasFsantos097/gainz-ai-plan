@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Dumbbell, LogOut, History } from "lucide-react";
+import { LogOut, History } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import logoAsset from "@/assets/teamlf-logo.png.asset.json";
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -16,11 +17,9 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
-            <Dumbbell className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
-          </div>
+          <img src={logoAsset.url} alt="FITPLAN" className="h-9 w-9 rounded-md object-contain" />
           <span className="font-display text-lg font-bold tracking-tight">
-            FitPlan<span className="text-primary">AI</span>
+            FIT<span className="text-primary">PLAN</span>
           </span>
         </Link>
 
