@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "FitPlan AI — Treinos personalizados com IA" },
+      { title: "FITPLAN — Treinos personalizados com IA" },
       { name: "description", content: "Gere planos de treino personalizados em segundos. Hipertrofia, emagrecimento, condicionamento — adaptados ao seu nível, sexo, idade e equipamento." },
     ],
   }),
@@ -72,7 +72,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-border py-10 text-center text-xs text-muted-foreground">
-        FitPlan AI · Treine inteligente
+        FITPLAN · Treine inteligente
       </footer>
     </div>
   );

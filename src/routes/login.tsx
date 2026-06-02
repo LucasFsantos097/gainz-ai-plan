@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
-  head: () => ({ meta: [{ title: "Entrar · FitPlan AI" }] }),
+  head: () => ({ meta: [{ title: "Entrar · FITPLAN" }] }),
 });
 
 function LoginPage() {

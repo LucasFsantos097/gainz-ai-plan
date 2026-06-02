@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/workout/$id")({
   component: WorkoutPage,
-  head: () => ({ meta: [{ title: "Seu treino · FitPlan AI" }] }),
+  head: () => ({ meta: [{ title: "Seu treino · FITPLAN" }] }),
 });
 
 type CompletionKey = `${number}-${number}`;

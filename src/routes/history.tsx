@@ -9,7 +9,7 @@ import { listWorkouts } from "@/lib/workouts.functions";
 
 export const Route = createFileRoute("/history")({
   component: HistoryPage,
-  head: () => ({ meta: [{ title: "Histórico · FitPlan AI" }] }),
+  head: () => ({ meta: [{ title: "Histórico · FITPLAN" }] }),
 });
 
 type Item = {
