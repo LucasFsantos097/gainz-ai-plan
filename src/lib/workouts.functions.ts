@@ -264,7 +264,7 @@ Profissionais de saúde que acompanham: ${profList}
 ${data.routine || "Não detalhada pelo aluno"}
 
 INSTRUÇÕES FINAIS:
-- Gere periodização completa de 8 a 10 semanas com TODAS as semanas detalhadas
+- Gere periodização completa de EXATAMENTE 8 semanas com TODAS as semanas detalhadas
 - Cada sessão deve ter OBRIGATORIAMENTE 6 a 8 exercícios
 - Inclua DELOAD obrigatório na última ou penúltima semana
 - Personalize o título e o summary citando ${data.fullName} e seus objetivos específicos
