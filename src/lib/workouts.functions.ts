@@ -75,6 +75,20 @@ export type Phase = {
   description: string;
 };
 
+export type WeeklyAnalysis = {
+  weekNumber: number;
+  focus: string;
+  rationale: string;
+};
+
+export type PlanAnalysis = {
+  overview: string;
+  anamnesisHighlights: string[];
+  adaptations: string[];
+  weekly: WeeklyAnalysis[];
+  expectedOutcomes: string;
+};
+
 export type WorkoutPlan = {
   title: string;
   summary: string;
@@ -82,6 +96,7 @@ export type WorkoutPlan = {
   sessionMinutes: number;
   phases: Phase[];
   weeks: WorkoutWeek[];
+  analysis?: PlanAnalysis;
 };
 
 export const generateWorkout = createServerFn({ method: "POST" })
